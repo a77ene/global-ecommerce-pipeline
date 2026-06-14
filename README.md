@@ -1,9 +1,7 @@
 # 📊 Global E-Commerce Real-Time Pricing & Inventory Pipeline
 
-[![Python Version](https://shields.io)](https://python.org)
-[![dbt Core](https://shields.io)](https://getdbt.com)
-[![Streamlit](https://shields.io)](https://streamlit.io)
-[![License: MIT](https://shields.io)](https://opensource.org)
+[Python](https://python.org) | [dbt Core](https://getdbt.com) | [Streamlit](https://streamlit.io) | [MIT License](https://opensource.org)
+
 
 An end-to-end, production-grade ELT data platform designed to ingest streaming global clickstream events, monitor regional inventory balances for supply chain anomalies, and dynamically recalculate optimal consumer pricing using localized demand elasticity metrics.
 
