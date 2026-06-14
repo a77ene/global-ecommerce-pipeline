@@ -24,6 +24,21 @@ graph TD
     style G fill:#E53935,stroke:#C62828,stroke-width:2px,color:#FFFFFF
 ```
 
+## 📊 Streamlit Dashboard Showcase
+
+The pipeline exposes near real-time business intelligence metrics via an interactive Streamlit dashboard. Users can filter by global regions, track transaction velocities, and monitor sales conversions.
+
+### 1. Global Sales Overview
+*Displays high-level KPIs including gross merchandise value (GMV), total orders, and average order value (AOV) across continents.*
+![Global Sales Overview](assets/screenshots/dashboard_main.png)
+
+### 2. Live Inventory & Fulfillment Latency
+*Tracks stock fluctuations and calculates time gaps between payment processing and warehouse fulfillment dispatch.*
+![Inventory Analytics](assets/screenshots/dashboard_inventory.png)
+
+> 💡 **Tip:** To reproduce these views locally, ensure your PostgreSQL/Snowflake data warehouse credentials are set in `.env`, then run `streamlit run app/main.py`.
+
+
 ### 1. Extraction & Ingestion Layer
 * **Telemetry Generation:** A native Python engine utilizes `Faker` to generate high-fidelity, mock geographic clickstream telemetry (user sessions, add-to-carts, conversion funnels).
 * **Storage:** Data is continuously streamed directly into a raw PostgreSQL local schema layout environment.
