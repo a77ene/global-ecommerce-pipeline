@@ -34,7 +34,7 @@ The pipeline exposes near real-time business intelligence metrics via an interac
 
 ### 2. Live Inventory & Fulfillment Latency
 *Tracks stock fluctuations and calculates time gaps between payment processing and warehouse fulfillment dispatch.*
-![Inventory Analytics](assets/screenshots/dashboard_inventory.png)
+![Inventory Analytics](assets/qry_results.png)
 
 > 💡 **Tip:** To reproduce these views locally, ensure your PostgreSQL/Snowflake data warehouse credentials are set in `.env`, then run `streamlit run app/main.py`.
 
