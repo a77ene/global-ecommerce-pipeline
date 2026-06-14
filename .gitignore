@@ -1,0 +1,9 @@
+venv/ 
+dbt-env/ 
+dbt_ecommerce/dbt-env/ 
+airflow/airflow.db 
+airflow/logs/ 
+*.db 
+target/ 
+logs/ 
+airflow/standalone_admin_password.txt

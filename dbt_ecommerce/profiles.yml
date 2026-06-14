@@ -1,0 +1,12 @@
+dbt_ecommerce:
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: postgres
+      password: 544ko
+      port: 5432
+      dbname: ecom_analytics_db       # dbt builds tables inside your analytics database
+      schema: public
+      threads: 4
+  target: dev

@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw_source
+    database: ecom_analytics_db  # Matches your local target database name
+    schema: raw                  # Points directly to the schema created by Python
+    tables:
+      - name: raw_customer_behavior
+        description: "Raw streaming clickstream event payloads from global users"
+        columns:
+          - name: event_id
+            tests:
+              - unique
+              - not_null

@@ -1,0 +1,7 @@
+name: 'dbt_ecommerce'
+version: '1.0.0'
+
+profile: 'dbt_ecommerce' 
+
+model-paths: ["models"]
+
