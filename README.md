@@ -30,7 +30,7 @@ The pipeline exposes near real-time business intelligence metrics via an interac
 
 ### 1. Global Sales Overview
 *Displays high-level KPIs including gross merchandise value (GMV), total orders, and average order value (AOV) across continents.*
-![Global Sales Overview](assets/screenshots/dashboard_main.png)
+![Global Sales Overview]([assets/screenshots/dashboard_main.pn](https://github.com/a77ene/global-ecommerce-pipeline/blob/main/assets/screencapture-localhost-8501-2026-06-14-18_13_53.png)g)
 
 ### 2. Live Inventory & Fulfillment Latency
 *Tracks stock fluctuations and calculates time gaps between payment processing and warehouse fulfillment dispatch.*
