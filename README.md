@@ -18,10 +18,10 @@ graph TD
     E -->|Sessionization & Window Analytics| F[dbt Marts Layer]
     F -->|Demand Elasticity Rules| G[Streamlit Optimization Dashboard]
     
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style F fill:#bfb,stroke:#333,stroke-width:2px
-    style G fill:#fbb,stroke:#333,stroke-width:2px
+    style A fill:#1E88E5,stroke:#1565C0,stroke-width:2px,color:#FFFFFF
+    style B fill:#FFB300,stroke:#F57C00,stroke-width:2px,color:#FFFFFF
+    style F fill:#43A047,stroke:#2E7D32,stroke-width:2px,color:#FFFFFF
+    style G fill:#E53935,stroke:#C62828,stroke-width:2px,color:#FFFFFF
 ```
 
 ### 1. Extraction & Ingestion Layer
