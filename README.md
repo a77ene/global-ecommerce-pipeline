@@ -34,7 +34,7 @@ The pipeline underwent rigorous testing with synthetic global e-commerce workloa
 | :--- | :--- | :--- | :--- |
 | **Ingestion Throughput** | 5,000 rows/sec | **12,500 rows/sec** | Peak streaming batch test |
 | **End-to-End Latency** | < 2.0 mins | **42 seconds** | CSV generation to Streamlit refresh |
-| **Total Rows Processed** | — | **50,000,000+ rows** | Robustness soak test over 48 hours ([test report](docs/test-reports/)) |
+| **Total Rows Processed** | — | **50,000,000+ rows** | Robustness soak test over 48 hours  |
 | **DB Ingestion Success Rate**| > 99.9% | **100%** | Test environment; production monitoring via alerting rules |
 | **Airflow DAG Execution Time**| < 5.0 mins | **1 min 15 sec** | Optimized via task parallelization |
 
