@@ -85,7 +85,7 @@ try:
     def highlight_surges(row):
         return ['background-color: #ffcccc' if row.is_inventory_anomaly == 1 else '' for _ in row]
         
-    st.dataframe(df.style.apply(highlight_surges, axis=1), use_container_width=True)
+    st.dataframe(df.style.apply(highlight_surges, axis=1), width=True)
 
 except Exception as e:
     st.error(f"Could not connect to database. Ensure your orchestrator loop is running. Error: {e}")
