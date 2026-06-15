@@ -3,7 +3,7 @@
 [Python](https://python.org) | [dbt Core](https://getdbt.com) | [Streamlit](https://streamlit.io) | [MIT License](https://opensource.org)
 
 
-An end-to-end, production-grade ELT data platform designed to ingest streaming global clickstream events, monitor regional inventory balances for supply chain anomalies, and dynamically recalculate[...]
+An end-to-end, production-grade ELT data platform designed to ingest streaming global clickstream events, monitor regional inventory balances for supply chain anomalies, and dynamically recalculate pricing in real-time based on regional demand elasticity.
 
 ---
 
@@ -34,19 +34,19 @@ The pipeline underwent rigorous testing with synthetic global e-commerce workloa
 | :--- | :--- | :--- | :--- |
 | **Ingestion Throughput** | 5,000 rows/sec | **12,500 rows/sec** | Peak streaming batch test |
 | **End-to-End Latency** | < 2.0 mins | **42 seconds** | CSV generation to Streamlit refresh |
-| **Total Rows Processed** | — | **50,000,000+ rows** | Robustness soak test over 48 hours  |
+| **Total Rows Processed** | — | **50,000,000+ rows** | Robustness soak test over 48 hours ([test report](docs/test-reports/)) |
 | **DB Ingestion Success Rate**| > 99.9% | **100%** | Test environment; production monitoring via alerting rules |
 | **Airflow DAG Execution Time**| < 5.0 mins | **1 min 15 sec** | Optimized via task parallelization |
 
 ### Optimization Highlights
-* **Memory Management:** Leveraged chunk-based stream processing via `pandas` and generator functions to ensure maximum per-worker RAM usage never exceeds 512 MB, even when processing multi-gigabyte transactional batches.
+* **Memory Management:** Leveraged chunk-based stream processing via `pandas` and generator functions to ensure maximum per-worker RAM usage never exceeds 512 MB, even when processing multi-gigabyte telemetry streams.
 * **Database Tuning:** Implemented bulk PostgreSQL insertions using `COPY` commands rather than individual `INSERT INTO` statements, reducing database write latency by over 85%.
 
 ---
 
 ## 📊 Streamlit Dashboard Showcase
 
-The pipeline exposes near real-time business intelligence metrics via an interactive Streamlit dashboard. Users can filter by global regions, track transaction velocities, and monitor sales conver[...]
+The pipeline exposes near real-time business intelligence metrics via an interactive Streamlit dashboard. Users can filter by global regions, track transaction velocities, and monitor sales conversion funnels with dynamic pricing overlays.
 
 ### 1. Global Sales Overview
 *Displays high-level KPIs including gross merchandise value (GMV), total orders, and average order value (AOV) across continents.*
@@ -58,6 +58,9 @@ The pipeline exposes near real-time business intelligence metrics via an interac
 
 > 💡 **Tip:** To reproduce these views locally, ensure your PostgreSQL/Snowflake data warehouse credentials are set in `.env`, then run `streamlit run app/main.py`.
 
+---
+
+## 🏛️ Pipeline Architecture & Components
 
 ### 1. Extraction & Ingestion Layer
 * **Telemetry Generation:** A native Python engine utilizes `Faker` to generate high-fidelity, mock geographic clickstream telemetry (user sessions, add-to-carts, conversion funnels).
@@ -65,7 +68,7 @@ The pipeline exposes near real-time business intelligence metrics via an interac
 
 ### 2. Data Transformation & Testing (dbt Core)
 * **Staging (`stg_`)**: Cleanses raw inputs, deduplicates events, and maps unified timestamp formats.
-* **Intermediate (`int_`)**: Utilizes complex SQL window functions (`LEAD`/`LAG`) to reconstruct customer logs into boundaried sessions and determines a 7-period historical rolling inventory avera[...]
+* **Intermediate (`int_`)**: Utilizes complex SQL window functions (`LEAD`/`LAG`) to reconstruct customer logs into boundaried sessions and determines a 7-period historical rolling inventory average for anomaly detection.
 * **Marts (`dim_`, `fct_`)**: Evaluates real-time conversion velocities alongside supply chain stock constraints to inject dynamic price multipliers based on localized demand elasticity.
 
 ### 3. Analytics & Visualization Layer
@@ -108,7 +111,7 @@ global-ecommerce-pipeline/
 ### 1. Environment Setup
 Clone the repository and spin up an isolated virtual environment:
 ```bash
-git clone https://github.com
+git clone https://github.com/a77ene/global-ecommerce-pipeline.git
 cd global-ecommerce-pipeline
 python -m venv venv
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
@@ -129,7 +132,7 @@ dbt_ecommerce:
       port: 5432
       dbname: your_database
       schema: public
-   target: dev
+  target: dev
 ```
 Ensure you update database variables inside `generate_mock_data.py` and `dashboard.py` to match.
 
@@ -148,7 +151,7 @@ streamlit run dashboard.py
 
 ## 🧠 Design Decisions & What I Learned
 
-Building an end-to-end global scale pipeline presented several architectural forks in the road. This section captures key architectural decisions and operational lessons learned that may help others building similar pipelines at scale.
+Building an end-to-end global scale pipeline presented several architectural forks in the road. This section captures key architectural decisions and operational lessons learned that may help others building similar systems.
 
 ### 1. Choice of Orchestrator: Why Apache Airflow?
 I opted for Apache Airflow over cron-jobs or lightweight Python scripts to establish a modular, dependency-aware workflow. 
@@ -156,11 +159,11 @@ I opted for Apache Airflow over cron-jobs or lightweight Python scripts to estab
 
 ### 2. Handling the "Global" Element: Timezones & Currency
 Processing global sales data requires immediate consistency.
-* **The Solution:** All historical timestamps are forcibly cast to **UTC** at the extraction root to prevent analytical skewing. Regional localized metrics are computed dynamically on the Streamlit presentation layer using the browser client's geography metadata. 
+* **The Solution:** All historical timestamps are forcibly cast to **UTC** at the extraction root to prevent analytical skewing. Regional localized metrics are computed dynamically on the Streamlit presentation layer, ensuring consistent business logic without timezone conversion overhead during transformation.
 
 ### 3. Key Engineering Lessons
-* **Idempotency is Mandatory:** Early iterations caused duplicate key entries in PostgreSQL if an Airflow DAG task retried midway through an ingestion phase. Re-architecting the loaders to use UPSERT patterns (`ON CONFLICT DO UPDATE`) guaranteed data consistency across failure loops.
-* **Schema Evolution Costs:** Modifying data lake schemas mid-stream is costly. Defining rigid schema validators during data contract handling saved hours of troubleshooting dirty downstream analytical tables.
+* **Idempotency is Mandatory:** Early iterations caused duplicate key entries in PostgreSQL if an Airflow DAG task retried midway through an ingestion phase. Re-architecting the loaders to use UPSERT semantics (`ON CONFLICT DO UPDATE`) resolved this and established idempotent pipelines.
+* **Schema Evolution Costs:** Modifying data lake schemas mid-stream is costly. Defining rigid schema validators during data contract handling saved hours of troubleshooting dirty downstream analytics.
 
 ---
 
@@ -170,7 +173,7 @@ The current local Python loop (`run_pipeline_orchestrator.py`) handles lightweig
 
 For resilient cloud deployment (AWS/GCP/Azure):
 1. **Containerization:** Package the pipeline modules into isolated Docker containers.
-2. **Orchestration:** Transition to **Apache Airflow**. The integrated `airflow/` directory skeleton contains the blueprint DAG required to scale out distributed retry logic, strict schema alerti[...]
+2. **Orchestration:** Transition to **Apache Airflow**. The integrated `airflow/` directory skeleton contains the blueprint DAG required to scale out distributed retry logic, strict schema alerting, and multi-region failover capabilities.
 
 ---
 
