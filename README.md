@@ -146,6 +146,24 @@ streamlit run dashboard.py
 
 ---
 
+## 🧠 Design Decisions & What I Learned
+
+Building an end-to-end global scale pipeline presented several architectural forks in the road. This section captures key architectural decisions and operational lessons learned that may help others building similar pipelines at scale.
+
+### 1. Choice of Orchestrator: Why Apache Airflow?
+I opted for Apache Airflow over cron-jobs or lightweight Python scripts to establish a modular, dependency-aware workflow. 
+* **The Benefit:** If the historical API extraction fails, the downstream transformation steps are cleanly paused, firing off retry blocks rather than creating corrupted database structures.
+
+### 2. Handling the "Global" Element: Timezones & Currency
+Processing global sales data requires immediate consistency.
+* **The Solution:** All historical timestamps are forcibly cast to **UTC** at the extraction root to prevent analytical skewing. Regional localized metrics are computed dynamically on the Streamlit presentation layer using the browser client's geography metadata. 
+
+### 3. Key Engineering Lessons
+* **Idempotency is Mandatory:** Early iterations caused duplicate key entries in PostgreSQL if an Airflow DAG task retried midway through an ingestion phase. Re-architecting the loaders to use UPSERT patterns (`ON CONFLICT DO UPDATE`) guaranteed data consistency across failure loops.
+* **Schema Evolution Costs:** Modifying data lake schemas mid-stream is costly. Defining rigid schema validators during data contract handling saved hours of troubleshooting dirty downstream analytical tables.
+
+---
+
 ## 📈 Future Production Roadmap (Apache Airflow Scaling)
 
 The current local Python loop (`run_pipeline_orchestrator.py`) handles lightweight cron-like triggers to stay lightweight and bypass local OS pathing quirks. 
