@@ -1,13 +1,33 @@
+import sys
+import importlib
 import os
 import pandas as pd
 import plotly.express as px
 from sqlalchemy import create_engine
 import streamlit as st
 
-# Set up page configurations
+# ==========================================
+# 1. STREAMLIT PAGE CONFIG (MUST BE FIRST)
+# ==========================================
 st.set_page_config(
-    page_title="Global E-Commerce Pricing Control Center", layout="wide"
+    page_title="Global E-Commerce Pricing Control Center", 
+    layout="wide"
 )
+
+# ==========================================
+# 2. PYTHON MODULE RELOADER 
+# ==========================================
+# CHANGE 'my_helper_module' to the actual name of your secondary python files.
+# If you don't have secondary files, you can delete this section entirely.
+TARGET_MODULES = ["my_helper_module"] 
+
+for module in TARGET_MODULES:
+    if module in sys.modules:
+        importlib.reload(sys.modules[module])
+
+# ==========================================
+# 3. CORE APPLICATION
+# ==========================================
 st.title("📊 Global E-Commerce Dynamic Pricing Control Center")
 st.markdown(
     "Real-time telemetry tracking regional inventory anomalies and price optimization thresholds."
@@ -15,20 +35,22 @@ st.markdown(
 
 # Establish connection to local database
 db_user = os.getenv("DB_USER", "postgres")
-db_password = os.getenv(
-    "DB_PASSWORD", "544ko"
-)  # <-- Replace with your real password
+db_password = os.getenv("DB_PASSWORD", "544ko") 
 db_host = os.getenv("DB_HOST", "localhost")
 db_port = os.getenv("DB_PORT", "5432")
 db_name = os.getenv("DB_NAME", "ecom_analytics_db")
+
+# Create engine without caching to guarantee fresh database hits
 engine = create_engine(
     f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 )
 
 # Fetch latest calculation parameters from dbt Mart Layer
 try:
-    df = pd.read_sql("SELECT * FROM dim_products_pricing", engine)
-
+    # Adding a clean connection context forces a brand new SQL fetch
+    with engine.connect() as conn:
+        df = pd.read_sql("SELECT * FROM dim_products_pricing", conn)
+    
     # ─── METRIC BLOCKS ───
     total_anomalies = int(df["is_inventory_anomaly"].sum())
     avg_conversion = float(df["conversion_rate"].mean() * 100)
@@ -41,7 +63,8 @@ try:
         delta="-2% vs last hour",
     )
     col2.metric(
-        label="📈 Average Platform Conversion Rate", value=f"{avg_conversion:.2f}%"
+        label="📈 Average Platform Conversion Rate", 
+        value=f"{avg_conversion:.2f}%"
     )
     col3.metric(
         label="💰 Highest Surge Optimized Price",
@@ -54,13 +77,12 @@ try:
     chart_data = df.groupby("region_id")[
         ["base_retail_price", "dynamic_optimized_price"]
     ].mean()
-    # Explicitly use width='stretch' to handle the modern Streamlit layout system
-    st.bar_chart(chart_data, width="stretch")
+    st.bar_chart(chart_data)
 
     # ─── PIE CHART SECTION ───
     st.subheader("📈 Composition Analysis")
     pie_col1, pie_col2 = st.columns(2)
-
+    
     with pie_col1:
         st.write("**Products by Region**")
         regional_distribution = (
@@ -69,7 +91,7 @@ try:
         fig1 = px.pie(
             regional_distribution, values="count", names="region_id", hole=0.3
         )
-        st.plotly_chart(fig1, width="stretch")
+        st.plotly_chart(fig1, use_container_width=True)
 
     with pie_col2:
         st.write("**Inventory Anomaly Status**")
@@ -81,16 +103,13 @@ try:
             "is_inventory_anomaly"
         ].map(anomaly_labels)
         fig2 = px.pie(
-            anomaly_counts,
-            values="count",
-            names="is_inventory_anomaly",
-            hole=0.3,
+            anomaly_counts, values="count", names="is_inventory_anomaly", hole=0.3
         )
-        st.plotly_chart(fig2, width="stretch")
+        st.plotly_chart(fig2, use_container_width=True)
 
     # ─── ADDITIONAL PIE CHARTS ───
     pie_col3, pie_col4 = st.columns(2)
-
+    
     with pie_col3:
         st.write("**Price Tier Distribution**")
         price_bins = [
@@ -110,7 +129,7 @@ try:
         fig3 = px.pie(
             price_tier_dist, values="count", names="price_tier", hole=0.3
         )
-        st.plotly_chart(fig3, width="stretch")
+        st.plotly_chart(fig3, use_container_width=True)
 
     with pie_col4:
         st.write("**Conversion Rate Performance**")
@@ -131,24 +150,18 @@ try:
         fig4 = px.pie(
             conv_dist, values="count", names="conversion_tier", hole=0.3
         )
-        st.plotly_chart(fig4, width="stretch")
+        st.plotly_chart(fig4, use_container_width=True)
 
     # ─── DATA SECTIONS ───
     st.subheader("🌐 Global Price Matrix Grid")
-
     def highlight_surges(row):
         return [
             "background-color: #ffcccc" if row.is_inventory_anomaly == 1 else ""
             for _ in row
         ]
-
-    st.dataframe(df.style.apply(highlight_surges, axis=1), width="stretch")
+    st.dataframe(df.style.apply(highlight_surges, axis=1), use_container_width=True)
 
 except Exception as e:
     st.error(
         f"Could not connect to database. Ensure your orchestrator loop is running. Error: {e}"
     )
-
-
-except Exception as e:
-    st.error(f"Could not connect to database. Ensure your orchestrator loop is running. Error: {e}")
