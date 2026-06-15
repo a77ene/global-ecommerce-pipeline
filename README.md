@@ -28,16 +28,6 @@ graph TD
 
 The pipeline underwent rigorous testing with synthetic global e-commerce workloads to measure scale limits, concurrency handling, and ingestion latency.
 
-### Core Benchmarks
-
-| Metric | Target / SLA | Achieved Performance | Notes |
-| :--- | :--- | :--- | :--- |
-| **Ingestion Throughput** | 5,000 rows/sec | **12,500 rows/sec** | Peak streaming batch test |
-| **End-to-End Latency** | < 2.0 mins | **42 seconds** | CSV generation to Streamlit refresh |
-| **Total Rows Processed** | — | **50,000,000+ rows** | Robustness soak test over 48 hours ([test report](docs/test-reports/)) |
-| **DB Ingestion Success Rate**| > 99.9% | **100%** | Test environment; production monitoring via alerting rules |
-| **Airflow DAG Execution Time**| < 5.0 mins | **1 min 15 sec** | Optimized via task parallelization |
-
 ### Optimization Highlights
 * **Memory Management:** Leveraged chunk-based stream processing via `pandas` and generator functions to ensure maximum per-worker RAM usage never exceeds 512 MB, even when processing multi-gigabyte telemetry streams.
 * **Database Tuning:** Implemented bulk PostgreSQL insertions using `COPY` commands rather than individual `INSERT INTO` statements, reducing database write latency by over 85%.
@@ -150,20 +140,18 @@ streamlit run dashboard.py
 ---
 
 ## 🧠 Design Decisions & What I Learned
-
-Building an end-to-end global scale pipeline presented several architectural forks in the road. This section captures key architectural decisions and operational lessons learned that may help others building similar systems.
+Building an end-to-end, global-scale pipeline involved many architectural trade-offs. This section highlights key decisions and operational lessons that may help others build similar systems.
 
 ### 1. Choice of Orchestrator: Why Apache Airflow?
-I opted for Apache Airflow over cron-jobs or lightweight Python scripts to establish a modular, dependency-aware workflow. 
-* **The Benefit:** If the historical API extraction fails, the downstream transformation steps are cleanly paused, firing off retry blocks rather than creating corrupted database structures.
+I chose Apache Airflow and lightweight Python scripts to create a modular, dependency-aware workflow.
+* **The Benefit:** If the historical API extraction fails, the downstream transformation steps are paused, firing off retry blocks rather than creating corrupted database structures.
 
 ### 2. Handling the "Global" Element: Timezones & Currency
-Processing global sales data requires immediate consistency.
-* **The Solution:** All historical timestamps are forcibly cast to **UTC** at the extraction root to prevent analytical skewing. Regional localized metrics are computed dynamically on the Streamlit presentation layer, ensuring consistent business logic without timezone conversion overhead during transformation.
+Processing global sales data requires consistency from the start—Which was tricky, but I eventually figured out a solution (see below).
+* **The Solution:** All the historical timestamps are cast to **UTC** at extraction to prevent analytical skew. Regional metrics are then computed dynamically in the Streamlit BI layer, preserving consistent business logic without adding timezone-conversion overhead during transformation.
 
-### 3. Key Engineering Lessons
-* **Idempotency is Mandatory:** Early iterations caused duplicate key entries in PostgreSQL if an Airflow DAG task retried midway through an ingestion phase. Re-architecting the loaders to use UPSERT semantics (`ON CONFLICT DO UPDATE`) resolved this and established idempotent pipelines.
-* **Schema Evolution Costs:** Modifying data lake schemas mid-stream is costly. Defining rigid schema validators during data contract handling saved hours of troubleshooting dirty downstream analytics.
+### 3. Lessons from Implementation (and a few mistakes along the way)
+* **Data Reliability and Preventing Duplication:** Data Reliability & Duplication Control: Prevented PostgreSQL primary key conflicts during mid-phase Airflow task failures by replacing standard inserts with UPSERT (ON CONFLICT DO UPDATE) logic, ensuring bulletproof pipeline recovery and data consistency.
 
 ---
 
